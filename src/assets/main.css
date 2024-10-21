@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* width */
+::-webkit-scrollbar {
+  width: 0.5vw;
+  height: 5px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: rgba(87, 127, 186, 0.123);
+  border-radius: 30px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #9ab1d0;
+}
+
+/* input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+} */
+
+/* Untuk Firefox */
+/* input[type='number'] {
+  -moz-appearance: textfield;
+} */
+
+.bg-base-gray {
+  background: #f6f6f6;
+}
+.bg-blue-1 {
+  background: #44648e;
+}
+.bg-scrim-lighten {
+  background: #ffffff39;
+}

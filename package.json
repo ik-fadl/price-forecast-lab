@@ -1,0 +1,40 @@
+{
+  "name": "price-forecast-lab",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --fix",
+    "format": "prettier --write src/"
+  },
+  "dependencies": {
+    "@vuepic/vue-datepicker": "^7.2.0",
+    "apexcharts": "^3.54.1",
+    "axios": "^1.7.7",
+    "date-fns": "^4.1.0",
+    "moment-timezone": "^0.5.46",
+    "pinia": "^2.2.4",
+    "price-forecast-lab": "file:",
+    "remixicon": "^4.3.0",
+    "vue": "^3.5.12",
+    "vue-router": "^4.4.5",
+    "vue3-apexcharts": "^1.7.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.12.0",
+    "@vitejs/plugin-vue": "^5.1.4",
+    "@vitejs/plugin-vue-jsx": "^4.0.1",
+    "@vue/eslint-config-prettier": "^10.0.0",
+    "autoprefixer": "^10.4.20",
+    "eslint": "^9.12.0",
+    "eslint-plugin-vue": "^9.29.0",
+    "postcss": "^8.4.47",
+    "prettier": "^3.3.3",
+    "tailwindcss": "^3.4.14",
+    "vite": "^5.4.8"
+  }
+}
