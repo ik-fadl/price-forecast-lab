@@ -4,7 +4,7 @@
     <MenuTab :tab_menu="tab_menu" />
     <!-- end:menu -->
     <!-- CONTENT -->
-    <div class="w-full h-full px-10 py-5">
+    <div class="w-full h-full px-10 py-3">
       <div class="flex flex-wrap gap-3">
         <!-- LEFT SIDE -->
         <div class="w-full md:w-[22%]  h-full flex flex-col gap-2">
@@ -55,10 +55,13 @@
         </div>
         <!-- end:left -->
         <!-- RIGHT SIDE -->
-        <div class="w-full md:w-[76%]">
+        <div class="w-full md:w-[76%] h-[78vh]">
           <div class="w-full h-full flex flex-col gap-3">
             <!-- TAB CONTENT -->
-            <div class="w-full h-max flex flex-wrap justify-between items-end gap-1">
+            <div v-if="openFormula" class="w-full overflow-hidden border rounded-lg ps-5 py-3">
+              <FormulaView :data_formula="data_formula" :alpha="alpha" :beta="beta" @close="openFormula = false" />
+            </div>
+            <div v-else class="w-full h-max flex flex-wrap justify-between items-end gap-1">
               <div class="h-max flex gap-1">
                 <template v-for="tab in tab_content">
                   <button @click="activeContent(tab)" class=" h-7 px-3 rounded flex items-center justify-center text-xs"
@@ -75,7 +78,7 @@
             </div>
             <!-- end:tab -->
             <!-- CONTENT -->
-            <div class="w-full flex flex-col rounded-lg h-[68vh] overflow-auto">
+            <div v-if="!openFormula" class="w-full flex flex-col rounded-lg h-[68vh] overflow-auto">
               <!-- TOP CONTENT -->
               <div v-if="tab_content[0].active && openFormula != true" class="w-full h-[40vh] flex flex-col items-end">
                 <LineChart v-if="tab_content[0].active && tab_content[1].active" :series="data_series" height="250" />
@@ -86,10 +89,6 @@
               <div v-if="tab_content[1].active && openFormula != true" class="w-fullf lex flex-col items-end"
                 :class="!tab_content[0].active ? 'h-full' : 'h-[40vh]'">
                 <ListTable :headers="headers" :items="items" :rowClicked="true" @callback-table="resTable" />
-              </div>
-              <div v-if="openFormula" class="w-full h-full border rounded-lg ps-5 py-3">
-                <FormulaView :data_formula="data_formula" :alpha="alpha" :beta="beta" @close="openFormula = false" />
-                <!-- end:content -->
               </div>
               <!-- end:bottom -->
             </div>
@@ -158,11 +157,11 @@ export default {
         { key: "prediksi", name: "prediksi", active: false },
       ],
       tab_content: [
-        { key: "grafik", name: "grafik", active: false },
+        { key: "grafik", name: "grafik", active: true },
         { key: "table", name: "tabel", active: true },
       ],
       periode: {
-        tgl_awal: '2024-01-01',
+        tgl_awal: '2024-10-01',
         tgl_akhir: utils.today(),
       },
       headers: [
@@ -340,7 +339,10 @@ export default {
         let last_trend = i == 0 ? this.items[this.items.length - 1].trend : i
 
         this.items[this.items.length] = {
+          state: 'next',
+          m: i == 0 ? i + 1 : i,
           tanggal: this.items.length + 1,
+          level: last_level,
           x: this.items.length + 1,
           x2: this.items.length + 1,
           trend: last_trend,

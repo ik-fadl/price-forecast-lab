@@ -1,6 +1,6 @@
 <template>
   <div class="w-full h-full fixed top-0 left-0 flex justify-center items-center z-10 bg-scrim-lighten">
-    <svg height="10%" width="15%" class="animate-spin" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg"
+    <svg height="7%" width="15%" class="animate-spin" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg"
       xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 213.333 213.333" xml:space="preserve" fill="#000000">
       <g id="SVGRepo_bgCarrier" stroke-width="0"></g>
       <g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g>

@@ -1,8 +1,9 @@
 <template>
   <div class="flex flex-col gap-1">
     <label :for="keys" class="text-xs text-gray-600 ms-1">{{ label }}</label>
-    <input type="text" :name="keys" :id="keys" v-model="text" :placeholder="placeholder"
-      class="h-9 border border-gray-100 bg-transparent text-gray-600 focus:border-transparent hover:border-gray-400 rounded-lg text-sm" />
+    <input @click="openOption = !openOption" type="text" :name="keys" :id="keys" v-model="option" readonly
+      :placeholder="placeholder"
+      class="h-9 border border-gray-100 cursor-pointer bg-transparent text-gray-600 focus:border-transparent hover:border-gray-400 rounded-lg text-sm" />
   </div>
 </template>
 
@@ -25,16 +26,15 @@ export default {
   emits: ['callback-text'],
   data() {
     return {
-      text: this.value,
+      openOption: false,
+      option: this.value,
     }
   },
   methods: {
     selectDate() {
       this.$nextTick(() => {
-
-        let val = { [this.keys]: this.text }
-        this.$emit("callback-text", val)
-
+        let val = { [this.keys]: this.option }
+        this.$emit("callback-option", val)
       })
 
     }

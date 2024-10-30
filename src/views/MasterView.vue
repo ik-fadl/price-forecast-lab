@@ -99,6 +99,10 @@ export default {
       let filtered = dataitem.find(dt => dt.level == 2)
       let keys = Object.keys(filtered).filter(ft => ft != 'no' && ft != "name" && ft != "level")
 
+      this.parseData(keys, filtered)
+
+    },
+    parseData(keys, filtered) {
       for (let i = 0; i < keys.length; i++) {
         this.items.push({
           tanggal: utils.unSlashDate(keys[i]),
@@ -109,7 +113,6 @@ export default {
       this.items.sort((a, b) => a.tanggal.localeCompare(b.tanggal));
 
       this.setSeries()
-
     },
     setSeries() {
       this.data_series = [{ name: "Data aktual", data: this.items.map(dt => dt.harga) }]

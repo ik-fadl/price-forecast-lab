@@ -1,68 +1,48 @@
 <template>
-  <div class="w-full h-full flex flex-col gap-5 text-sm text-gray-700 overflow-auto">
+  <div class="relative w-full h-full flex flex-col gap-5 text-sm text-gray-700 overflow-auto">
     <!-- HEADER FORMULA -->
     <div class="flex justify-end me-5">
-      <button @click="close()" class="ri-close-line text-lg text-gray-500"></button>
+      <button @click="close()"
+        class="ri-close-line w-8 h-8 rounded-full fixed text-lg text-gray-500 bg-[#21212117]"></button>
     </div>
     <!-- end:header -->
     <!-- CONTENT -->
     <div class="flex flex-row-reverse gap-2 justify-between">
-
       <!-- KETERANGAN -->
       <div class="flex flex-col gap-1 me-0 md:me-10 h-max p-3 border rounded-md">
         <span class="font-semibold">Keterangan:</span>
-        <div class="flex gap-3">
-          <div class="flex flex-col">
-            <span>At</span>
-            <span>Tt</span>
-            <span>Tt-1</span>
-            <span>Lt</span>
-            <span>Lt-1</span>
-            <span>a</span>
-            <span>b</span>
-            <span>Ft+1</span>
-            <span>Error</span>
+        <template v-for="f in fl.filter(fll => fll.show.keterangan)">
+          <div class="flex gap-3">
+            <div class="flex flex-col w-10">
+              <span v-html="f.name"></span>
+            </div>
+            <div class="flex flex-col">
+              <span>: {{ f.title }}</span>
+            </div>
           </div>
-          <div class="flex flex-col">
-            <span>: data aktual</span>
-            <span>: trend data saat ini</span>
-            <span>: trend data sebelumnya</span>
-            <span>: level data saat ini</span>
-            <span>: level data sebelumnya</span>
-            <span>: alpha</span>
-            <span>: beta</span>
-            <span>: data prediksi</span>
-            <span>: error</span>
-          </div>
-        </div>
+        </template>
       </div>
       <!-- end:keterangan -->
       <div class="flex flex-col gap-5">
         <!-- DIKETAHUI -->
         <div class="flex flex-col gap-1">
           <span class="font-semibold">Diketahui:</span>
-          <div class="flex gap-3">
-            <div class="flex flex-col">
-              <span>At</span>
-              <span>Tt-1</span>
-              <span>Lt-1</span>
-              <span>a</span>
-              <span>b</span>
+          <template v-for="f in fl.filter(fll => fll.value && fll.show.diketahui)">
+            <div class="flex gap-3">
+              <div class="flex flex-col w-10">
+                <span v-html="f.name"></span>
+              </div>
+              <div class="flex flex-col">
+                <span>: {{ utils.numb(f.value) }}</span>
+              </div>
             </div>
-            <div class="flex flex-col">
-              <span>: {{ utils.numb(At) }}</span>
-              <span>: {{ utils.numb(Tt) }}</span>
-              <span>: {{ utils.numb(Ltx) }}</span>
-              <span>: {{ alpha }}</span>
-              <span>: {{ beta }}</span>
-            </div>
-          </div>
+          </template>
         </div>
         <!-- end:diketahui -->
         <!-- PENYELESAIAN -->
         <div class="flex flex-col gap-3">
           <span class="font-semibold">Penyelesaian:</span>
-          <template v-if="data_formula.data_index < 2">
+          <template v-if="data_formula.data_index < 2 && data_formula.data_sekarang.state != 'next'">
             <div class="py-2 px-3 border rounded-md flex flex-col w-max">
               <span class="mb-2">inisialisasi:</span>
               <span>Lt = {{ data_formula.data_index == 0 ? '0' : 'At' }}</span>
@@ -77,7 +57,7 @@
               <span class="font-semibold">Error = 0</span>
             </div>
           </template>
-          <template v-else>
+          <template v-else-if="data_formula.data_sekarang.state != 'next'">
             <!-- LEVEL -->
             <div class="w-max px-3 border rounded-md">
               <img src="../assets/img/lt_formula.jpeg" class="h-10" alt="level_formula">
@@ -141,6 +121,22 @@
             </div>
             <!-- end:error -->
           </template>
+          <template v-else>
+            <!-- FORECAST -->
+            <div class="w-max px-3 border rounded-md">
+              <img src="../assets/img/forecast+.jpeg" class="h-9" alt="forecast">
+            </div>
+            <div class="ms-5 flex flex-col">
+              <span>Ft+{{ data_formula.data_sekarang?.m }} = {{ utils.numb(data_formula.data_sekarang?.level) }} + {{
+                data_formula.data_sekarang?.m }} .
+                {{
+                  data_formula.data_sekarang?.trend }}</span>
+              <span class="bg-green-200 px-1 w-max">Ft+{{ data_formula.data_sekarang?.m }} = {{
+                utils.numb(data_formula.data_sekarang?.level +
+                  (data_formula.data_sekarang?.m *
+                    data_formula.data_sekarang?.trend)) }}</span>
+            </div>
+          </template>
         </div>
         <!-- end:penyelesaian -->
       </div>
@@ -163,13 +159,24 @@ export default {
   emits: ['colse'],
   data() {
     return {
-      // Ft: this.data_formula.data_sekarang?.data_prediksi ?? 0,
       At: this.data_formula.data_sekarang?.harga ?? 0,
       Atx: this.data_formula.data_sebelumnya?.harga ?? 0,
-      // Tt: this.data_formula.data_sekarang?.trend ?? 0,
       Ttx: this.data_formula.data_sebelumnya?.trend ?? 0,
-      // Lt: this.data_formula.data_sekarang?.level ?? 0,
       Ltx: this.data_formula.data_sebelumnya?.level ?? 0,
+      fl: [
+        { key: "alpha", name: "&#x03B1", title: "alpha", value: this.alpha, show: { keterangan: true, diketahui: true } },
+        { key: "beta", name: "&#x03B2;", title: "beta", value: this.beta, show: { keterangan: true, diketahui: true } },
+        { key: "At", name: "At", title: "data aktual", value: this.data_formula.data_sekarang?.harga ?? 0, show: { keterangan: this.data_formula.data_sekarang.state != 'next', diketahui: this.data_formula.data_sekarang.state != 'next' } },
+        { key: "Atx", name: "At-1", title: "data aktual sebelumnya", value: this.data_formula.data_sebelumnya?.harga ?? 0, show: { keterangan: this.data_formula.data_sekarang.state != 'next', diketahui: this.data_formula.data_sekarang.state != 'next' } },
+        { key: "Tt", name: "Tt", title: "trend saat ini", value: this.data_formula.data_sekarang?.trend, show: { keterangan: true, diketahui: this.data_formula.data_sekarang.state == 'next' } },
+        { key: "Ttx", name: "Tt-1", title: "trend data sebelumnya", value: this.data_formula.data_sebelumnya?.trend, show: { keterangan: this.data_formula.data_sekarang.state != 'next', diketahui: this.data_formula.data_sekarang.state != 'next' } },
+        { key: "Lt", name: "Lt", title: "level saat ini", value: this.data_formula.data_sekarang?.level ?? 0, show: { keterangan: true, diketahui: this.data_formula.data_sekarang.state == 'next' } },
+        { key: "Ltx", name: "Lt-1", title: "level data sebelumnya", value: this.data_formula.data_sebelumnya?.level ?? 0, show: { keterangan: this.data_formula.data_sekarang.state != 'next', diketahui: this.data_formula.data_sekarang.state != 'next' } },
+        { key: "Ft", name: "Ft+1", title: "data prediksi", show: { keterangan: this.data_formula.data_sekarang.state != 'next', diketahui: this.data_formula.data_sekarang.state != 'next' } },
+        { key: "Ftm", name: "Ft+m", title: "data prediksi ke-m", show: { keterangan: this.data_formula.data_sekarang.state == 'next', diketahui: this.data_formula.data_sekarang.state == 'next' } },
+        { key: "m", name: "m", title: "jumlah periode di masa depan", value: this.data_formula.data_sekarang.m, show: { keterangan: this.data_formula.data_sekarang.state == 'next', diketahui: this.data_formula.data_sekarang.state == 'next' } },
+        { key: "Error", name: "Error", title: "Error", show: { keterangan: this.data_formula.data_sekarang.state != 'next', diketahui: this.data_formula.data_sekarang.state != 'next' } },
+      ]
     }
   },
   computed: {
