@@ -46,7 +46,7 @@
             <div class="py-2 px-3 border rounded-md flex flex-col w-max">
               <span class="mb-2">inisialisasi:</span>
               <span>Lt = {{ data_formula.data_index == 0 ? '0' : 'At' }}</span>
-              <span>Tt = {{ data_formula.data_index == 0 ? '0' : 'At - Ato' }}</span>
+              <span>Tt = {{ data_formula.data_index == 0 ? '0' : 'Lt - Lto' }}</span>
               <span>Ft = 0</span>
               <span>Error = 0</span>
             </div>

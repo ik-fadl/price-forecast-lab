@@ -7,14 +7,15 @@
         <template v-for="tab in tab_menu">
           <div class="w-full flex">
             <div @mouseenter="openTab(tab)"
-              class="w-full flex justify-between items-center min-h-10 py-2 px-3 hover:bg-gray-50 cursor-pointer">
+              class="w-full flex justify-between items-center min-h-10 py-2 px-3 hover:bg-gray-100 cursor-pointer">
               <span> {{ tab.name }} </span>
               <span v-if="tab.children" class="ri-arrow-right-s-line"></span>
             </div>
             <div v-if="tab.active" @mouseleave="closeTab()"
               class="absolute w-40 h-max max-h-64 ms-[50%] rounded bg-white shadow-xl text-xs font-medium">
               <template v-for="child in tab.children">
-                <span @click="goto(child)" class="min-h-10 py-2 px-3 flex items-center hover:bg-gray-50 cursor-pointer">
+                <span @click="goto(child)"
+                  class="min-h-10 py-2 px-3 flex items-center hover:bg-gray-100 cursor-pointer">
                   {{ child.name }}
                 </span>
               </template>
@@ -33,7 +34,7 @@
         <div v-if="tab.active" @mouseleave="closeTab()"
           class="absolute mt-5 w-40 h-max max-h-64 rounded bg-white shadow text-xs font-medium">
           <template v-for="child in tab.children">
-            <span @click="goto(child)" class="min-h-10 py-2 px-3 flex items-center hover:bg-gray-50 cursor-pointer">
+            <span @click="goto(child)" class="min-h-10 py-2 px-3 flex items-center hover:bg-gray-100 cursor-pointer">
               {{ child.name }}
             </span>
           </template>

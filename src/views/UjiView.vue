@@ -14,14 +14,22 @@
                 }}%</span></span>
           </div>
           <!-- end:mape -->
-          <!-- SET ALPHA & BETA -->
+          <!-- SET PARAMETER -->
           <div class="w-full h-max flex flex-col gap-2 px-2 py-3 border rounded-lg">
-            <InputOption label="metode" keys="metode" :value="metode.name" :option="metode.option"
-              @callback-option="setParams" />
-            <InputNumber v-if="metode.name == 'DES' || metode.name == 'SES'" label="alpha" keys="alpha" :value="alpha"
-              @callback-number="setParams" />
-            <InputNumber v-if="metode.name == 'DES'" label="beta" keys="beta" :value="beta"
-              @callback-number="setParams" />
+            <InputOption label="metode" keys="metode" :value="metode.active"
+              :menu_opt="metode.option.map(opt => opt.name)" @callback-option="setMethod" />
+            <template v-for="param in metode.option.find(m => m.name == metode.active)?.parameter">
+              <template v-if="param.key == 'bobot'">
+                <template v-for="bobot, b in parameter.bobot.length">
+                  <InputNumber :label="param.title" :keys="b" :step="0.1" :max="1" :value="parameter.bobot[b]"
+                    @callback-number="setParams" />
+                </template>
+              </template>
+              <InputNumber v-else :label="param.title" :keys="param.key"
+                :step="metode.active == 'DES' || metode.active == 'SES' ? 0.1 : 1"
+                :max="metode.active == 'DES' || metode.active == 'SES' ? 1 : 10" :value="parameter[param.key]"
+                @callback-number="setParams" />
+            </template>
           </div>
           <!-- end:alpha -->
           <!-- TAB MODE -->
@@ -36,7 +44,7 @@
           <div class="w-full h-full min-h-[150px] border rounded-lg px-3 py-4">
             <template v-if="tab_mode[0].active">
               <div class="flex flex-col gap-2">
-                <InputNumber label="harga" keys="harga" :value="train_harga" @callback-number="setParams" />
+                <InputNumber label="harga" keys="harga" :value="parameter.data_train" @callback-number="setParams" />
                 <button @click="addData()"
                   class="text-sm bg-blue-400 h-[37px] px-3 w-max flex gap-1 items-center justify-center text-white rounded-lg focus-within:bg-blue-500 focus:shadow-xl shadow-blue-400">
                   <span class="ri-add-line rounded bg-[#ffffff29] w-4 h-4 text-xs"></span>
@@ -46,8 +54,9 @@
             </template>
             <template v-else>
               <div class="flex flex-col gap-2">
-                <span class="text-sm text-gray-600">Prediksi harga dalam :</span>
-                <InputNumber keys="bulan" :value="n_month" placeholder="2 bulan" @callback-number="setParams" />
+                <span class="text-sm text-gray-600">Prediksi harga dalam (bulan):</span>
+                <InputNumber keys="n_periode" :value="parameter.n_periode" placeholder="2 bulan"
+                  @callback-number="setParams" />
                 <button @click="nextPredict()"
                   class="text-sm bg-blue-400 h-[37px] px-3 w-max flex gap-1 items-center justify-center text-white rounded-lg focus-within:bg-blue-500 focus:shadow-xl shadow-blue-400">
                   <span>Prediksi</span>
@@ -62,10 +71,7 @@
         <div class="w-full md:w-[76%] h-[78vh]">
           <div class="w-full h-full flex flex-col gap-3">
             <!-- TAB CONTENT -->
-            <div v-if="openFormula" class="w-full overflow-hidden border rounded-lg ps-5 py-3">
-              <FormulaView :data_formula="data_formula" :alpha="alpha" :beta="beta" @close="openFormula = false" />
-            </div>
-            <div v-else class="w-full h-max flex flex-wrap justify-between items-end gap-1">
+            <div class="w-full h-max flex flex-wrap justify-between items-end gap-1">
               <div class="h-max flex gap-1">
                 <template v-for="tab in tab_content">
                   <button @click="activeContent(tab)" class=" h-7 px-3 rounded flex items-center justify-center text-xs"
@@ -82,17 +88,17 @@
             </div>
             <!-- end:tab -->
             <!-- CONTENT -->
-            <div v-if="!openFormula" class="w-full flex flex-col rounded-lg h-[68vh] overflow-auto">
+            <div class="w-full flex flex-col rounded-lg h-[68vh] overflow-auto">
               <!-- TOP CONTENT -->
-              <div v-if="tab_content[0].active && openFormula != true" class="w-full h-[40vh] flex flex-col items-end">
+              <div v-if="tab_content[0].active" class="w-full h-[40vh] flex flex-col items-end">
                 <LineChart v-if="tab_content[0].active && tab_content[1].active" :series="data_series" height="250" />
                 <LineChart v-else :series="data_series" height="400" />
               </div>
               <!-- end:top -->
               <!-- BOTTOM CONTENT -->
-              <div v-if="tab_content[1].active && openFormula != true" class="w-fullf lex flex-col items-end"
+              <div v-if="tab_content[1].active" class="w-fullf lex flex-col items-end"
                 :class="!tab_content[0].active ? 'h-full' : 'h-[40vh]'">
-                <ListTable :headers="headers" :items="items" :rowClicked="true" @callback-table="resTable" />
+                <ListTable :headers="header" :items="items" :rowClicked="false" />
               </div>
               <!-- end:bottom -->
             </div>
@@ -115,8 +121,9 @@ import ListTable from '@/components/component/ListTable.vue';
 import MenuTab from '@/components/component/MenuTab.vue';
 import api from '@/services/api';
 import utils from '@/utils/utils';
-import FormulaView from './FormulaView.vue';
 import InputOption from '@/components/component/InputOption.vue';
+import Forecast from '@/services/forecast';
+import ApiService from '@/services/api';
 </script>
 
 <script>
@@ -129,31 +136,31 @@ export default {
       tab_menu: [
         {
           key: "cabairawit", name: "Cabai Rawit", active: false, children: [
-            { parent: "forecast", key: "cabai-rawit-hijau", name: "Cabai Rawit Hijau" },
-            { parent: "forecast", key: "cabai-rawit-merah", name: "Cabai Rawit Merah" },
+            { parent: "uji", key: "cabai-rawit-hijau", name: "Cabai Rawit Hijau" },
+            { parent: "uji", key: "cabai-rawit-merah", name: "Cabai Rawit Merah" },
           ]
         },
         {
           key: "cabaimerah", name: "Cabai Merah", active: false, children: [
-            { parent: "forecast", key: "cabai-merah-besar", name: "Cabai Merah Besar" },
-            { parent: "forecast", key: "cabai-merah-keriting", name: "Cabai Merah Keriting" },
+            { parent: "uji", key: "cabai-merah-besar", name: "Cabai Merah Besar" },
+            { parent: "uji", key: "cabai-merah-keriting", name: "Cabai Merah Keriting" },
           ]
         },
         {
           key: "minyakgoreng", name: "Minyak Goreng", active: false, children: [
-            { parent: "forecast", key: "minyak-goreng-curah", name: "Minyak Goreng Curah" },
-            { parent: "forecast", key: "minyak-goreng-kemasan", name: "Minyak Goreng Kemasan Bermerk 1" },
+            { parent: "uji", key: "minyak-goreng-curah", name: "Minyak Goreng Curah" },
+            { parent: "uji", key: "minyak-goreng-kemasan", name: "Minyak Goreng Kemasan Bermerk 1" },
           ]
         },
         {
           key: "telurayam", name: "Telur Ayam", active: false, children: [
-            { parent: "forecast", key: "telur-ayam-ras", name: "Telur Ayam Ras" }
+            { parent: "uji", key: "telur-ayam-ras", name: "Telur Ayam Ras" }
           ]
         },
         {
           key: "gulapasir", name: "Gula Pasir", active: false, children: [
-            { parent: "forecast", key: "gula-pasir-premium", name: "Gula Pasir Kualitas Premium" },
-            { parent: "forecast", key: "gula-pasir-lokal", name: "Gula Pasir Lokal" },
+            { parent: "uji", key: "gula-pasir-premium", name: "Gula Pasir Kualitas Premium" },
+            { parent: "uji", key: "gula-pasir-lokal", name: "Gula Pasir Lokal" },
           ]
         }
       ],
@@ -166,124 +173,87 @@ export default {
         { key: "table", name: "tabel", active: true },
       ],
       periode: {
-        tgl_awal: '2024-01-01',
+        tgl_awal: '2024-10-01',
         tgl_akhir: utils.today(),
       },
       headers: [
-        { key: "tanggal", name: "Periode", type: "text" },
+        { key: "periode", name: "Periode", type: "text" },
         { key: "harga", name: "Data aktual", type: "number" },
         { key: "level", name: "Level", type: "number" },
         { key: "trend", name: "Trend", type: "number" },
+        { key: "differencing", name: "Differencing", type: "number" },
         { key: "data_prediksi", name: "Data Prediksi", type: "number" },
         { key: "error", name: "Error", type: "number" },
       ],
+      parameter: {
+        alpha: 0.4,
+        beta: 0.9,
+        avg: 2,
+        bobot: [0.2, 0.8],
+        y: 0,
+        data_train: 0,
+        n_periode: 0
+      },
       metode: {
-        name: "DES",
-        option: ["SES", "DES", "ARIMA", "WMA"]
+        active: 'DES',
+        option: [
+          { name: "SES", parameter: [{ key: 'alpha', title: 'Alpha' }] },
+          { name: "DES", parameter: [{ key: 'alpha', title: 'Alpha' }, { key: 'beta', title: 'Beta' }] },
+          { name: "SMA", parameter: [{ key: 'avg', title: 'Jumlah periode' }] },
+          { name: "WMA", parameter: [{ key: 'avg', title: 'Jumlah Periode' }, { key: 'bobot', title: 'Bobot data' }] },
+          { name: "ARIMA", parameter: [{ key: 'p', title: 'p' }, { key: 'd', title: 'd' }, { key: 'q', title: 'q' }] },
+        ],
+
       },
       items: [],
       old_items: [],
+      data_forecast: '',
       data_series: [],
-      data_formula: '',
-      openFormula: false,
       state: '',
-      alpha: 0.9,
-      beta: 0.4,
       n_month: 5,
-      train_harga: 0,
+      train_periode: 0,
       mape: 0,
     }
   },
-
+  computed: {
+    header() {
+      let result = this.metode.active != 'DES' && this.metode.active != 'ARIMA' ? this.headers.filter(head => head.key != 'level' && head.key != 'trend' && head.key != 'differencing') : this.metode.active == 'ARIMA' ? this.headers.filter(h => h.key != 'level' && h.key != 'trend') : this.headers.filter(h => h.key != 'differencing')
+      return result
+    }
+  },
   methods: {
     async fetch() {
       this.items = []
       let start_date = this.periode?.tgl_awal
       let end_date = this.periode?.tgl_akhir
+      let apiService = new ApiService(this.config.code_comodity, start_date, end_date)
 
-      let dataitem = await api.get(this.config.code_comodity, start_date, end_date)
-
-      let filtered = dataitem.find(dt => dt.level == 2)
-      let keys = Object.keys(filtered).filter(ft => ft != 'no' && ft != "name" && ft != "level")
-
-      for (let i = 0; i < keys.length; i++) {
-        this.items.push({
-          tanggal: utils.unSlashDate(keys[i]),
-          harga: utils.justNumber(filtered[keys[i]])
-        })
-      }
-      this.items = this.items.filter(item => item.harga != 0)
-      this.old_items = this.items.filter(item => item.harga != 0)
-      this.old_items.sort((a, b) => a.tanggal.localeCompare(b.tanggal));
-      this.items.sort((a, b) => a.tanggal.localeCompare(b.tanggal));
+      this.items = await apiService.fetchData()
+      this.old_items = [...this.items]
 
     },
     forecast() {
-      // INITIAL  VALUE
+      this.data_forecast = new Forecast(this.parameter, this.items)
+      if (this.metode.active == 'DES') this.data_forecast.forecast_des()
+      else if (this.metode.active == 'SES') this.data_forecast.forecast_ses()
+      else if (this.metode.active == 'SMA') this.data_forecast.forecast_sma()
+      else if (this.metode.active == 'WMA') this.data_forecast.forecast_wma()
+      else if (this.metode.active == 'ARIMA') this.data_forecast.forecast_arima()
 
-      // Lt0 = 0, Tt0 = 0
-      let Lt = [0]
-      let Tt = [0]
-      let Error = [0]
-      let Ft = [0]
-      let Yt = this.items.map(item => item.harga)
-
-      // Lt1 = Yt1
-      Lt.push(Yt[1])
-      // Tt1 = Yt1 - Yt0
-      Tt.push(Yt[1] - Yt[0])
-      // Ft1 = 0 (undefined)
-      Ft.push(0)
-      // error = 0
-      Error.push(0)
-      // START FORECAST
-      for (let i = 2; i < Yt.length; i++) {
-        // Lti = alpha * Yti + (1 - alpha) * (Lti-1 + Tti-1)
-        Lt[i] = this.alpha * Yt[i] + (1 - this.alpha) * (Lt[i - 1] + Tt[i - 1])
-        // Tti = beta * (Lti - Lti-1) + (1-beta) * Tti-1
-        Tt[i] = this.beta * (Lt[i] - Lt[i - 1]) + (1 - this.beta) * Tt[i - 1]
-        // Fti = Lti +Tti
-        Ft[i] = Lt[i] + Tt[i]
-        // Err = abs(Yti - Fti)
-        Error[i] = Math.abs(Yt[i] - Ft[i]) / Yt[i]
-      }
-
-      let new_items = []
-
-      for (let i = 0; i < this.items.length; i++) {
-        new_items.push({
-          tanggal: this.items[i].tanggal,
-          x: this.items[i].tanggal,
-          x2: this.items[i].tanggal,
-          harga: this.items[i].harga,
-          y: this.items[i].harga,
-          level: Lt[i],
-          trend: Tt[i],
-          data_prediksi: Ft[i],
-          y2: Ft[i],
-          error: Error[i],
-          color: Error[i] < 0.01 && i > 1 && this.items[i].color == undefined ? 'bg-green-100' : (this.items[i].color ?? '')
-        })
-      }
-      let err = Error.slice(2)
-      this.mape = utils.numb((utils.sum(err) / err.length) * 100)
-
-      this.items = new_items
+      this.items = this.data_forecast.items
+      this.mape = this.data_forecast.mape
 
       this.setSeries()
 
     },
-    setSeries() {
-      let data_aktual = []
-      let data_prediksi = []
 
-      for (let i = 0; i < this.items.length; i++) {
-        data_aktual.push(this.items[i].y)
-        data_prediksi.push(this.items[i].y2)
-      }
+    setSeries() {
+      let data_aktual = this.items.filter(dt => dt.data_prediksi != 0 && dt.data_prediksi * 0 == 0).map(dt => dt.y)
+      let data_prediksi = this.items.filter(dt => dt.data_prediksi != 0 && dt.data_prediksi * 0 == 0).map(dt => dt.y2)
+
       this.data_series = [
-        { name: "Data aktual", data: data_aktual.slice(2) },
-        { name: "Data prediksi", data: data_prediksi.slice(2) },
+        { name: "Data aktual", data: data_aktual },
+        { name: "Data prediksi", data: data_prediksi }
       ]
 
     },
@@ -303,24 +273,35 @@ export default {
     submitDate() {
       this.fetch().then(() => this.forecast())
     },
+    setMethod(value) {
+      this.metode.active = value.metode
+      this.items = this.old_items
+      this.forecast()
+    },
     setParams(value) {
       let key = Object.keys(value)
-      if (key == 'alpha') {
-        this.alpha = value[key]
+      if (key == 'harga') {
+        this.parameter.data_train = value[key]
+      } else if (key == 'n_periode') {
+        this.parameter.n_periode = value[key];
+      } else if (this.metode.active == 'WMA' && key != 'avg') {
+        this.parameter.bobot[key] = value[key]
         this.items = this.old_items
         this.forecast()
-      } else if (key == 'beta') {
-        this.beta = value[key]
+      } else if (this.metode.active == 'WMA' && key == 'avg') {
+        this.parameter[key] = value[key]
+        if (this.parameter.bobot.length > this.parameter.avg) {
+          this.parameter.bobot.pop()
+        } else {
+          this.parameter.bobot.push(0)
+        }
         this.items = this.old_items
         this.forecast()
-      } else if (key == 'harga') {
-        this.train_harga = value[key]
-      } else if (key == 'n_month') {
-        this.n_month = value[key]
+      } else {
+        this.parameter[key] = value[key]
+        this.items = this.old_items
+        this.forecast()
       }
-
-      this.data_formula
-
 
     },
     addData() {
@@ -329,49 +310,25 @@ export default {
       }
       this.state = 'add'
       this.items.push({
-        tanggal: this.items.length + 1,
-        harga: this.train_harga,
+        periode: this.items.length + 1,
+        harga: this.parameter.data_train,
         color: 'bg-red-200'
       })
       this.forecast()
 
     },
     nextPredict() {
-      // if (this.n_month != 0) {
-      //   this.items = this.old_items
-      // }
       this.state = 'next'
-      // this.fetch()
-      let last_level = this.items[this.items.length - 1].level
-      for (let i = 0; i < this.n_month; i++) {
-        // Fti = Lt + (h.Tt)
-        let last_trend = i == 0 ? this.items[this.items.length - 1].trend : i
+      if (this.metode.active == 'DES') this.data_forecast.prediction_des(this.parameter.n_periode)
+      else if (this.metode.active == 'SES') this.data_forecast.prediction_ses(this.parameter.n_periode)
+      else if (this.metode.active == 'SMA') this.data_forecast.prediction_sma(this.parameter.n_periode)
+      else if (this.metode.active == 'WMA') this.data_forecast.prediction_wma(this.parameter.n_periode)
+      else if (this.metode.active == 'ARIMA') this.data_forecast.prediction_arima(this.parameter.n_periode)
 
-        this.items[this.items.length] = {
-          state: 'next',
-          m: i == 0 ? i + 1 : i,
-          tanggal: this.items.length + 1,
-          level: last_level,
-          x: this.items.length + 1,
-          x2: this.items.length + 1,
-          trend: last_trend,
-          data_prediksi: last_level + ((i + 1) * last_trend),
-          y: 0,
-          y2: last_level + ((i + 1) * last_trend),
-          color: 'bg-red-200'
-        }
-      }
+      this.items = this.data_forecast.items
       this.setSeries()
-      this.data_series.map((ds, i) => ds.data = i == 0 ? ds.data.slice(0, ds.data.length - this.n_month) : ds.data)
+      this.data_series.map((ds, i) => ds.data = i == 0 ? ds.data.slice(0, ds.data.length - this.parameter.n_periode) : ds.data)
     },
-    resTable(value, index) {
-      this.openFormula = true
-      this.data_formula = {
-        data_sebelumnya: this.items[index - 1],
-        data_sekarang: value,
-        data_index: index
-      }
-    }
   },
 
 

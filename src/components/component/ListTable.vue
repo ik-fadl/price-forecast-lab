@@ -14,8 +14,8 @@
     <div class="w-full h-full overflow-auto pb-5">
       <template v-for="item, i in items">
         <div @click="rowClicked ? row_clicked(item, i) : null"
-          class="w-full h-10 min-h-max flex flex-wrap md:flex-nowrap justify-between px-5 border-b border-dashed items-center text-sm text-gray-600 hover:bg-gray-50"
-          :class="item.color, rowClicked ? 'cursor-pointer' : ''">
+          class="w-full h-10 min-h-max flex flex-wrap md:flex-nowrap justify-between px-5 border-b border-dashed items-center text-sm text-gray-600"
+          :class="item.color ? `${item.color} hover:bg-opacity-50` : 'hover:bg-gray-100', rowClicked ? 'cursor-pointer' : ''">
           <span class="sr-only md:not-sr-only w-10 min-w-[40px] max-w-[40px] flex items-center">{{
             i + 1
           }}</span>

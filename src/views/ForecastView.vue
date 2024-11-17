@@ -42,8 +42,8 @@
             </template>
             <template v-else>
               <div class="flex flex-col gap-2">
-                <span class="text-sm text-gray-600">Prediksi harga dalam :</span>
-                <InputNumber keys="bulan" :value="n_month" placeholder="2 bulan" @callback-number="setParams" />
+                <span class="text-sm text-gray-600">Prediksi harga dalam (bulan):</span>
+                <InputNumber keys="n_month" :value="n_month" placeholder="2 bulan" @callback-number="setParams" />
                 <button @click="nextPredict()"
                   class="text-sm bg-blue-400 h-[37px] px-3 w-max flex gap-1 items-center justify-center text-white rounded-lg focus-within:bg-blue-500 focus:shadow-xl shadow-blue-400">
                   <span>Prediksi</span>
@@ -112,6 +112,8 @@ import MenuTab from '@/components/component/MenuTab.vue';
 import api from '@/services/api';
 import utils from '@/utils/utils';
 import FormulaView from './FormulaView.vue';
+import ApiService from '@/services/api';
+import Forecast from '@/services/forecast';
 </script>
 
 <script>
@@ -121,6 +123,7 @@ export default {
   },
   data() {
     return {
+      data_forecast: '',
       tab_menu: [
         {
           key: "cabairawit", name: "Cabai Rawit", active: false, children: [
@@ -165,7 +168,7 @@ export default {
         tgl_akhir: utils.today(),
       },
       headers: [
-        { key: "tanggal", name: "Periode", type: "text" },
+        { key: "periode", name: "Periode", type: "text" },
         { key: "harga", name: "Data aktual", type: "number" },
         { key: "level", name: "Level", type: "number" },
         { key: "trend", name: "Trend", type: "number" },
@@ -180,7 +183,7 @@ export default {
       state: '',
       alpha: 0.9,
       beta: 0.4,
-      n_month: 5,
+      n_month: 0,
       train_harga: 0,
       mape: 0,
     }
@@ -191,79 +194,26 @@ export default {
       this.items = []
       let start_date = this.periode?.tgl_awal
       let end_date = this.periode?.tgl_akhir
+      let apiService = new ApiService(this.config.code_comodity, start_date, end_date)
 
-      let dataitem = await api.get(this.config.code_comodity, start_date, end_date)
-
-      let filtered = dataitem.find(dt => dt.level == 2)
-      let keys = Object.keys(filtered).filter(ft => ft != 'no' && ft != "name" && ft != "level")
-
-      for (let i = 0; i < keys.length; i++) {
-        this.items.push({
-          tanggal: utils.unSlashDate(keys[i]),
-          harga: utils.justNumber(filtered[keys[i]])
-        })
-      }
-      this.items = this.items.filter(item => item.harga != 0)
-      this.old_items = this.items.filter(item => item.harga != 0)
-      this.old_items.sort((a, b) => a.tanggal.localeCompare(b.tanggal));
-      this.items.sort((a, b) => a.tanggal.localeCompare(b.tanggal));
+      this.items = await apiService.fetchData()
+      this.old_items = [...this.items]
 
     },
     forecast() {
-      // INITIAL  VALUE
-
-      // Lt0 = 0, Tt0 = 0
-      let Lt = [0]
-      let Tt = [0]
-      let Error = [0]
-      let Ft = [0]
-      let Yt = this.items.map(item => item.harga)
-
-      // Lt1 = Yt1
-      Lt.push(Yt[1])
-      // Tt1 = Yt1 - Yt0
-      Tt.push(Yt[1] - Yt[0])
-      // Ft1 = 0 (undefined)
-      Ft.push(0)
-      // error = 0
-      Error.push(0)
-      // START FORECAST
-      for (let i = 2; i < Yt.length; i++) {
-        // Lti = alpha * Yti + (1 - alpha) * (Lti-1 + Tti-1)
-        Lt[i] = this.alpha * Yt[i] + (1 - this.alpha) * (Lt[i - 1] + Tt[i - 1])
-        // Tti = beta * (Lti - Lti-1) + (1-beta) * Tti-1
-        Tt[i] = this.beta * (Lt[i] - Lt[i - 1]) + (1 - this.beta) * Tt[i - 1]
-        // Fti = Lti +Tti
-        Ft[i] = Lt[i] + Tt[i]
-        // Err = abs(Yti - Fti)
-        Error[i] = Math.abs(Yt[i] - Ft[i]) / Yt[i]
+      let param = {
+        alpha: this.alpha,
+        beta: this.beta,
       }
-
-      let new_items = []
-
-      for (let i = 0; i < this.items.length; i++) {
-        new_items.push({
-          tanggal: this.items[i].tanggal,
-          x: this.items[i].tanggal,
-          x2: this.items[i].tanggal,
-          harga: this.items[i].harga,
-          y: this.items[i].harga,
-          level: Lt[i],
-          trend: Tt[i],
-          data_prediksi: Ft[i],
-          y2: Ft[i],
-          error: Error[i],
-          color: Error[i] < 0.01 && i > 1 && this.items[i].color == undefined ? 'bg-green-100' : (this.items[i].color ?? '')
-        })
-      }
-      let err = Error.slice(2)
-      this.mape = utils.numb((utils.sum(err) / err.length) * 100)
-
-      this.items = new_items
+      this.data_forecast = new Forecast(param, this.items)
+      this.data_forecast.forecast_des()
+      this.items = this.data_forecast.items
+      this.mape = this.data_forecast.mape
 
       this.setSeries()
 
     },
+
     setSeries() {
       let data_aktual = []
       let data_prediksi = []
@@ -320,7 +270,7 @@ export default {
       }
       this.state = 'add'
       this.items.push({
-        tanggal: this.items.length + 1,
+        periode: this.items.length + 1,
         harga: this.train_harga,
         color: 'bg-red-200'
       })
@@ -328,30 +278,10 @@ export default {
 
     },
     nextPredict() {
-      // if (this.n_month != 0) {
-      //   this.items = this.old_items
-      // }
       this.state = 'next'
-      // this.fetch()
-      let last_level = this.items[this.items.length - 1].level
-      for (let i = 0; i < this.n_month; i++) {
-        // Fti = Lt + (h.Tt)
-        let last_trend = i == 0 ? this.items[this.items.length - 1].trend : i
+      this.data_forecast.prediction_des(this.n_month)
 
-        this.items[this.items.length] = {
-          state: 'next',
-          m: i == 0 ? i + 1 : i,
-          tanggal: this.items.length + 1,
-          level: last_level,
-          x: this.items.length + 1,
-          x2: this.items.length + 1,
-          trend: last_trend,
-          data_prediksi: last_level + ((i + 1) * last_trend),
-          y: 0,
-          y2: last_level + ((i + 1) * last_trend),
-          color: 'bg-red-200'
-        }
-      }
+      this.items = this.data_forecast.items
       this.setSeries()
       this.data_series.map((ds, i) => ds.data = i == 0 ? ds.data.slice(0, ds.data.length - this.n_month) : ds.data)
     },

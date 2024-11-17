@@ -34,7 +34,8 @@ import InputDate from '@/components/component/InputDate.vue';
 import LineChart from '@/components/component/LineChart.vue';
 import ListTable from '@/components/component/ListTable.vue';
 import MenuTab from '@/components/component/MenuTab.vue';
-import api from '@/services/api';
+import ApiService from '@/services/api';
+import DataSeries from '@/services/data_series';
 import utils from '@/utils/utils';
 </script>
 
@@ -77,7 +78,7 @@ export default {
         }
       ],
       periode: {
-        tgl_awal: '2024-01-01',
+        tgl_awal: '2024-10-01',
         tgl_akhir: utils.today(),
       },
       headers: [
@@ -93,29 +94,18 @@ export default {
     async fetch() {
       let start_date = this.periode?.tgl_awal
       let end_date = this.periode?.tgl_akhir
+      let apiService = new ApiService(this.config.code_comodity, start_date, end_date)
 
-      let dataitem = await api.get(this.config.code_comodity, start_date, end_date)
-
-      let filtered = dataitem.find(dt => dt.level == 2)
-      let keys = Object.keys(filtered).filter(ft => ft != 'no' && ft != "name" && ft != "level")
-
-      this.parseData(keys, filtered)
-
-    },
-    parseData(keys, filtered) {
-      for (let i = 0; i < keys.length; i++) {
-        this.items.push({
-          tanggal: utils.unSlashDate(keys[i]),
-          harga: utils.justNumber(filtered[keys[i]])
-        })
-      }
-      this.items = this.items.filter(item => item.harga != 0)
-      this.items.sort((a, b) => a.tanggal.localeCompare(b.tanggal));
-
+      this.items = await apiService.fetchData()
       this.setSeries()
+
     },
+
     setSeries() {
-      this.data_series = [{ name: "Data aktual", data: this.items.map(dt => dt.harga) }]
+      let data = [{ name: "Data aktual", data: this.items.map(dt => dt.harga) }]
+      let data_series = new DataSeries(data, this.items.map(item => item.tanggal))
+      this.data_series = data_series.setDataSeries()
+
     },
     formInput(value) {
       let key = Object.keys(value)[0]

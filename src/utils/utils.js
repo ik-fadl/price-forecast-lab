@@ -94,6 +94,20 @@ export default {
       0,
     )
   },
+  avg(array) {
+    return array.reduce((a, b) => a + b) / array.length
+  },
+  sortNumber(array, asc) {
+    if (asc) {
+      return array.sort(function (a, b) {
+        return a - b
+      })
+    } else {
+      return array.sort(function (a, b) {
+        return b - a
+      })
+    }
+  },
   async exportExcel(title, headers, items) {
     // Buat data dengan format array of arrays, array pertama adalah header
     const data = [
