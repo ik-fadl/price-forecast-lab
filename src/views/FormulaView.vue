@@ -3,7 +3,7 @@
     <!-- HEADER FORMULA -->
     <div class="flex justify-end me-5">
       <button @click="close()"
-        class="ri-close-line w-8 h-8 rounded-full fixed text-lg text-gray-500 bg-[#21212117]"></button>
+        class="ri-close-line w-8 h-8 rounded-full fixed text-lg text-gray-900 bg-[#21212117]"></button>
     </div>
     <!-- end:header -->
     <!-- CONTENT -->

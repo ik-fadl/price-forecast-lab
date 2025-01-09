@@ -4,7 +4,7 @@
       <template v-for="m, i in menu">
         <button :data-tooltip-target="m.key" data-tooltip-placement="right" @click="goto(m, i)"
           class="w-10 h-10 rounded-full hover:border hover:bg-white hover:text-blue-400 duration-100"
-          :class="m.active || $route.fullPath.split('/')[1] == m.key ? 'border bg-white text-blue-400' : 'text-gray-500'">
+          :class="m.active || $route.fullPath.split('/')[1] == m.key ? 'border bg-white text-blue-400' : 'text-gray-900'">
           <span :class="m.icon"></span>
         </button>
         <div :id="m.key" role="tooltip"

@@ -1,6 +1,6 @@
 <template>
   <!-- TAB MENU -->
-  <div class="w-full h-12 min-h-[48px] px-10 z-10 flex gap-5 items-center border-b text-sm text-gray-600">
+  <div class="w-full h-12 min-h-[48px] px-10 z-10 flex gap-5 items-center border-b text-sm text-gray-900">
     <div class="relative not-sr-only sm:sr-only">
       <button @click="openMenu()" class="ri-menu-line"></button>
       <div v-if="openMiniMenu" class="absolute mt-5 w-40 h-max max-h-64 rounded bg-white shadow-lg text-xs font-medium">
@@ -46,16 +46,22 @@
 </template>
 
 <script>
+import comodities from '@/comodities';
+
 export default {
   props: {
-    tab_menu: { required: true }
+    key: { required: true },
   },
+  emits: ['refresh'],
   data() {
     return {
       openMiniMenu: false,
+      tab_menu: ''
     }
   },
-
+  created() {
+    this.tab_menu = [...comodities.data]
+  },
   methods: {
     openTab(menu) {
       this.tab_menu.map(tab => tab.active = tab == menu)
@@ -65,8 +71,11 @@ export default {
       this.tab_menu.map(tab => tab.active = false)
     },
     goto(menu) {
-      this.$router.push('/' + menu.parent + '/' + menu.key)
+      console.log(menu);
+
+      this.$router.push({ name: this.key, query: { comodity: menu.key, id: menu.id } })
       this.closeTab()
+      this.$emit('refresh', menu.id)
     },
     openMenu() {
       this.openMiniMenu = !this.openMiniMenu

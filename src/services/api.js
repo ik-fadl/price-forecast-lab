@@ -3,13 +3,11 @@ import utils from '@/utils/utils'
 import axios from 'axios'
 
 const instance = axios.create({
-  // baseURL: 'http://localhost:3000',
+  // baseURL: 'https://latteace.com',
   headers: {
     Accept: 'application/json, text/plain, */*',
     'Access-Control-Allow-Origin': '*',
   },
-
-  withCredentials: true,
 })
 
 export default class ApiService {
@@ -22,12 +20,12 @@ export default class ApiService {
   async fetchData() {
     store().loader = true
     let param = {
-      price_type_id: 1,
       comcat_id: this.code_comodity,
+      price_type_id: 1,
       province_id: 14,
       regency_id: 35,
       market_id: '',
-      tipe_laporan: 1,
+      tipe_laporan: 5,
       start_date: this.start_date,
       end_date: this.end_date,
       _: '1701235320803',

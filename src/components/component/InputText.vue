@@ -1,8 +1,8 @@
 <template>
   <div class="flex flex-col gap-1">
-    <label :for="keys" class="text-xs text-gray-600 ms-1">{{ label }}</label>
+    <label :for="keys" class="text-xs text-gray-900 ms-1">{{ label }}</label>
     <input type="text" :name="keys" :id="keys" v-model="text" :placeholder="placeholder"
-      class="h-9 border border-gray-100 bg-transparent text-gray-600 focus:border-transparent hover:border-gray-400 rounded-lg text-sm" />
+      class="h-9 border border-gray-100 bg-transparent text-gray-900 focus:border-transparent hover:border-gray-400 rounded-lg text-sm" />
   </div>
 </template>
 

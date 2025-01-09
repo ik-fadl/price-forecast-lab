@@ -1,10 +1,10 @@
 <template>
   <div class="flex flex-col gap-1">
-    <label :for="keys" class="text-xs text-gray-600 ms-1">{{ label }}</label>
+    <label :for="keys" class="text-xs text-gray-900 ms-1">{{ label }}</label>
     <div class="relative flex items-center">
       <input @click="openOption = !openOption" type="text" :name="keys" :id="keys" v-model="option" readonly
         :placeholder="placeholder"
-        class="w-full h-9 border border-gray-100 cursor-pointer bg-transparent text-gray-600 focus:border-transparent hover:border-gray-400 rounded-lg text-sm" />
+        class="w-full h-9 border border-gray-100 cursor-pointer bg-transparent text-gray-900 focus:border-transparent hover:border-gray-400 rounded-lg text-sm" />
       <span v-if="openOption" class="absolute ri-arrow-up-s-line right-2"></span>
       <span v-else class="absolute ri-arrow-down-s-line right-2"></span>
     </div>

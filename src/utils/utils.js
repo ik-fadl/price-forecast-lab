@@ -23,6 +23,17 @@ export default {
     let date = new Date(value).toLocaleDateString('id', option)
     return date
   },
+  monthTomorrow() {
+    const today = new Date()
+
+    const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1)
+
+    const nextMonthName = nextMonth.toLocaleDateString('id-ID', {
+      month: 'long',
+    })
+
+    return nextMonthName
+  },
   today() {
     let currentDate = format(new Date(), 'yyyy-MM-dd')
     return currentDate
@@ -109,11 +120,14 @@ export default {
     }
   },
   async exportExcel(title, headers, items) {
+    console.log(items)
+
     // Buat data dengan format array of arrays, array pertama adalah header
     const data = [
       headers, // Header di baris pertama
       ...items, // Data di baris berikutnya
     ]
+    console.log(data)
 
     // Buat workbook dan worksheet
     const ws = XLSX.utils.aoa_to_sheet(data)

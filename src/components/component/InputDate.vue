@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col gap-1">
-    <span class="text-xs text-gray-600 ms-1">{{ label }}</span>
+    <span class="text-xs text-gray-900 ms-1">{{ label }}</span>
     <VueDatePicker @update:model-value="selectDate" :clearable="false" :min-date="mindate ?? null"
       :max-date="maxdate ?? null" cancelText="batal" selectText="pilih" format="PP" :enable-time-picker="false"
       v-model="date" calendar-cell-class-name="dp-custom-cell" menu-class-name="dp-custom-menu"
